@@ -1,15 +1,19 @@
 const TuyaAccessory = require('./lib/TuyaAccessory');
+const TuyaDiscovery = require('./lib/TuyaDiscovery');
+
 const OutletAccessory = require('./lib/OutletAccessory');
 const SimpleLightAccessory = require('./lib/SimpleLightAccessory');
 const MultiOutletAccessory = require('./lib/MultiOutletAccessory');
 const CustomMultiOutletAccessory = require('./lib/CustomMultiOutletAccessory');
 const RGBTWLightAccessory = require('./lib/RGBTWLightAccessory');
+const RGBTWOutletAccessory = require('./lib/RGBTWOutletAccessory');
 const TWLightAccessory = require('./lib/TWLightAccessory');
 const AirConditionerAccessory = require('./lib/AirConditionerAccessory');
 const ConvectorAccessory = require('./lib/ConvectorAccessory');
 const GarageDoorAccessory = require('./lib/GarageDoorAccessory');
 const SimpleDimmerAccessory = require('./lib/SimpleDimmerAccessory');
 const SimpleBlindsAccessory = require('./lib/SimpleBlindsAccessory');
+const SimpleHeaterAccessory = require('./lib/SimpleHeaterAccessory');
 
 const PLUGIN_NAME = 'homebridge-tuya-lan';
 const PLATFORM_NAME = 'TuyaLan';
@@ -18,6 +22,7 @@ const CLASS_DEF = {
     outlet: OutletAccessory,
     simplelight: SimpleLightAccessory,
     rgbtwlight: RGBTWLightAccessory,
+    rgbtwoutlet: RGBTWOutletAccessory,
     twlight: TWLightAccessory,
     multioutlet: MultiOutletAccessory,
     custommultioutlet: CustomMultiOutletAccessory,
@@ -25,7 +30,8 @@ const CLASS_DEF = {
     convector: ConvectorAccessory,
     garagedoor: GarageDoorAccessory,
     simpledimmer: SimpleDimmerAccessory,
-    simpleblinds: SimpleBlindsAccessory
+    simpleblinds: SimpleBlindsAccessory,
+    simpleheater: SimpleHeaterAccessory
 };
 
 let Characteristic, PlatformAccessory, Service, Categories, UUID;
@@ -67,7 +73,8 @@ class TuyaLan {
             } catch(ex) {}
 
             //if (!/^[0-9a-f]+$/i.test(device.id)) return this.log.error('%s, id for %s, is not a valid id.', device.id, device.name || 'unnamed device');
-            if (!/^[0-9a-f]+$/i.test(device.key)) return this.log.error('%s, key for %s (%s), is not a valid key.', device.key, device.name || 'unnamed device', device.id);
+            if (!/^[0-9a-f]+$/i.test(device.key)) return this.log.error('%s, key for %s (%s), is not a valid key.', device.key.replace(/.{4}$/, '****'), device.name || 'unnamed device', device.id);
+            if (!{16:1, 24:1, 32: 1}[device.key.length]) return this.log.error('%s, key for %s (%s), doesn\'t have the expected length.', device.key.replace(/.{4}$/, '****'), device.name || 'unnamed device', device.id);
             if (!device.type) return this.log.error('%s (%s) doesn\'t have a type defined.', device.name || 'Unnamed device', device.id);
             if (!CLASS_DEF[device.type.toLowerCase()]) return this.log.error('%s (%s) doesn\'t have a valid type defined.', device.name || 'Unnamed device', device.id);
 
@@ -80,14 +87,14 @@ class TuyaLan {
 
         this.log.info('Starting discovery...');
 
-        TuyaAccessory.discover({ids: deviceIds})
+        TuyaDiscovery.start({ids: deviceIds})
             .on('discover', config => {
                 if (!config || !config.id) return;
                 if (!devices[config.id]) return this.log.warn('Discovered a device that has not been configured yet (%s).', config.id);
 
                 connectedDevices.push(config.id);
 
-                this.log.info('Discovered %s (%s)', devices[config.id].name, config.id);
+                this.log.info('Discovered %s (%s) identified as %s (%s)', devices[config.id].name, config.id, devices[config.id].type, config.version);
 
                 const device = new TuyaAccessory({
                     ...devices[config.id], ...config,
@@ -123,7 +130,6 @@ class TuyaLan {
                 } else {
                     this.log.warn('Failed to discover %s (%s) in time but will keep looking.', devices[deviceId].name, deviceId);
                 }
-                //this.removeAccessoryByUUID(UUID.generate(PLUGIN_NAME + ':' + deviceId));
             });
         }, 60000);
     }
