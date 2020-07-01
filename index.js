@@ -68,11 +68,6 @@ class TuyaLan {
                 device.id = ('' + device.id).trim();
                 device.key = ('' + device.key).trim();
                 device.type = ('' + device.type).trim();
-                
-                device.mqttHost = ('' + device.mqttHost).trim();
-                device.mqttUsername = ('' + device.mqttUsername).trim();
-                device.mqttPassword = ('' + device.mqttPassword).trim();
-
 
                 device.ip = ('' + (device.ip || '')).trim();
             } catch(ex) {}
