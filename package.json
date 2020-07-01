@@ -25,7 +25,8 @@
     "fs-extra": "^8.1.0",
     "http-mitm-proxy": "^0.8.1",
     "json5": "^2.1.0",
-    "qrcode": "^1.4.1"
+    "qrcode": "^1.4.1",
+    "mqtt": "^4.1.0"
   },
   "keywords": [
     "homebridge-plugin",
